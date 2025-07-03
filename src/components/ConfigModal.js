@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, Info } from "lucide-react";
 
 const ConfigModal = ({ device, onSave, onClose }) => {
   const [config, setConfig] = useState({
@@ -34,6 +34,8 @@ const ConfigModal = ({ device, onSave, onClose }) => {
     }));
   };
 
+  const isSwitch = device?.type === "switch";
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -44,15 +46,29 @@ const ConfigModal = ({ device, onSave, onClose }) => {
           </button>
         </div>
 
+        {isSwitch && (
+          <div className="switch-info">
+            <Info size={16} />
+            <span>
+              Los switches funcionan en capa 2 y no requieren configuración IP
+              para el forwarding de tramas. La IP es solo para administración
+              remota.
+            </span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="config-form">
           <div className="form-group">
-            <label htmlFor="ip">Dirección IP:</label>
+            <label htmlFor="ip">
+              Dirección IP
+              {isSwitch ? " (Opcional - Solo para administración)" : ""}:
+            </label>
             <input
               type="text"
               id="ip"
               value={config.ip}
               onChange={(e) => handleChange("ip", e.target.value)}
-              placeholder="192.168.1.1"
+              placeholder={isSwitch ? "192.168.1.10 (opcional)" : "192.168.1.1"}
               pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
             />
           </div>
@@ -69,29 +85,37 @@ const ConfigModal = ({ device, onSave, onClose }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="gateway">Gateway:</label>
-            <input
-              type="text"
-              id="gateway"
-              value={config.gateway}
-              onChange={(e) => handleChange("gateway", e.target.value)}
-              placeholder="192.168.1.1"
-              pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
-            />
-          </div>
+          {!isSwitch && (
+            <>
+              <div className="form-group">
+                <label htmlFor="gateway">Gateway (Puerta de Enlace):</label>
+                <input
+                  type="text"
+                  id="gateway"
+                  value={config.gateway}
+                  onChange={(e) => handleChange("gateway", e.target.value)}
+                  placeholder="192.168.1.1"
+                  pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+                />
+                <small className="field-help">
+                  Puede ser cualquier IP válida. No necesita existir físicamente
+                  en la simulación.
+                </small>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="dns">DNS:</label>
-            <input
-              type="text"
-              id="dns"
-              value={config.dns}
-              onChange={(e) => handleChange("dns", e.target.value)}
-              placeholder="8.8.8.8"
-              pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="dns">DNS:</label>
+                <input
+                  type="text"
+                  id="dns"
+                  value={config.dns}
+                  onChange={(e) => handleChange("dns", e.target.value)}
+                  placeholder="8.8.8.8"
+                  pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+                />
+              </div>
+            </>
+          )}
 
           <div className="form-actions">
             <button type="button" className="cancel-btn" onClick={onClose}>

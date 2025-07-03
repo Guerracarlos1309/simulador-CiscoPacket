@@ -10,14 +10,20 @@ import {
   ChevronUp,
 } from "lucide-react";
 
-const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
+const PingModal = ({
+  sourceDevice,
+  availableDevices,
+  onPing,
+  onClose,
+  edges,
+}) => {
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [currentCommand, setCurrentCommand] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
   const [targetIp, setTargetIp] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const consoleRef = useRef(null);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     // Mensaje de bienvenida
@@ -37,32 +43,24 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
     );
   }, [sourceDevice]);
 
+  // Scroll automático mejorado
   useEffect(() => {
-    // Auto scroll al final solo si autoScroll está activado
-    if (consoleRef.current && autoScroll) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    if (autoScroll && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [consoleOutput, autoScroll]);
 
-  // Detectar si el usuario está en la parte inferior
-  const handleScroll = () => {
-    if (consoleRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = consoleRef.current;
-      const isBottom = scrollTop + clientHeight >= scrollHeight - 10;
-      setIsAtBottom(isBottom);
-
-      // Si el usuario hace scroll manual, desactivar auto-scroll temporalmente
-      if (!isBottom) {
-        setAutoScroll(false);
-      }
-    }
+  const addToConsole = (text, type = "normal") => {
+    setConsoleOutput((prev) => [
+      ...prev,
+      { text, type, timestamp: new Date() },
+    ]);
   };
 
   const scrollToBottom = () => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
       setAutoScroll(true);
-      setIsAtBottom(true);
     }
   };
 
@@ -70,22 +68,249 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
     if (consoleRef.current) {
       consoleRef.current.scrollTop = 0;
       setAutoScroll(false);
-      setIsAtBottom(false);
     }
   };
 
-  const addToConsole = (text, type = "normal") => {
-    setConsoleOutput((prev) => [
-      ...prev,
-      { text, type, timestamp: new Date() },
-    ]);
+  const handleScroll = () => {
+    if (consoleRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = consoleRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50;
 
-    // Reactivar auto-scroll cuando se agrega nuevo contenido
-    setTimeout(() => {
-      if (isAtBottom) {
-        setAutoScroll(true);
+      // Si el usuario hace scroll manual hacia arriba, desactivar auto-scroll
+      if (!isAtBottom && autoScroll) {
+        setAutoScroll(false);
       }
-    }, 100);
+    }
+  };
+
+  // Función para verificar si dos IPs están en la misma subred
+  const areInSameSubnet = (ip1, subnet1, ip2, subnet2) => {
+    if (!ip1 || !subnet1 || !ip2 || !subnet2) return false;
+
+    const ipToNumber = (ip) => {
+      return (
+        ip
+          .split(".")
+          .reduce((acc, octet) => (acc << 8) + Number.parseInt(octet), 0) >>> 0
+      );
+    };
+
+    const subnetToNumber = (subnet) => {
+      return (
+        subnet
+          .split(".")
+          .reduce((acc, octet) => (acc << 8) + Number.parseInt(octet), 0) >>> 0
+      );
+    };
+
+    const ip1Num = ipToNumber(ip1);
+    const ip2Num = ipToNumber(ip2);
+    const subnet1Num = subnetToNumber(subnet1);
+    const subnet2Num = subnetToNumber(subnet2);
+
+    // Verificar si las máscaras son iguales
+    if (subnet1Num !== subnet2Num) return false;
+
+    // Calcular la red de cada IP
+    const network1 = (ip1Num & subnet1Num) >>> 0;
+    const network2 = (ip2Num & subnet2Num) >>> 0;
+
+    return network1 === network2;
+  };
+
+  // Función para verificar conectividad de red
+  const checkNetworkConnectivity = (
+    sourceDevice,
+    targetDevice,
+    allDevices,
+    edges
+  ) => {
+    const sourceIp = sourceDevice?.data.ip;
+    const sourceSubnet = sourceDevice?.data.subnet;
+    const targetIp = targetDevice?.data.ip;
+    const targetSubnet = targetDevice?.data.subnet;
+
+    if (!sourceIp || !targetIp) {
+      return { connected: false, reason: "IP not configured" };
+    }
+
+    // Verificar si están en la misma subred
+    if (areInSameSubnet(sourceIp, sourceSubnet, targetIp, targetSubnet)) {
+      // Misma subred - verificar conexión física (switches actúan como puentes transparentes)
+      const isPhysicallyConnected = checkPhysicalConnectivity(
+        sourceDevice,
+        targetDevice,
+        allDevices,
+        edges
+      );
+      if (isPhysicallyConnected) {
+        return { connected: true, reason: "Same subnet, layer 2 connectivity" };
+      } else {
+        return { connected: false, reason: "Same subnet but no physical path" };
+      }
+    } else {
+      // Diferentes subredes - necesitan routing
+      const routingPath = checkRoutingPath(
+        sourceDevice,
+        targetDevice,
+        allDevices,
+        edges
+      );
+      if (routingPath.connected) {
+        return { connected: true, reason: routingPath.reason };
+      } else {
+        return { connected: false, reason: routingPath.reason };
+      }
+    }
+  };
+
+  // Verificar conectividad física a través de switches (los switches no necesitan IP)
+  const checkPhysicalConnectivity = (
+    sourceDevice,
+    targetDevice,
+    allDevices,
+    edges
+  ) => {
+    // BFS para encontrar un camino físico
+    const visited = new Set();
+    const queue = [sourceDevice.id];
+    visited.add(sourceDevice.id);
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+
+      if (currentId === targetDevice.id) {
+        return true;
+      }
+
+      // Encontrar todas las conexiones del dispositivo actual
+      const connections = edges.filter(
+        (edge) => edge.source === currentId || edge.target === currentId
+      );
+
+      for (const connection of connections) {
+        const nextId =
+          connection.source === currentId
+            ? connection.target
+            : connection.source;
+
+        if (!visited.has(nextId)) {
+          visited.add(nextId);
+          queue.push(nextId);
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Verificar ruta a través de routers
+  const checkRoutingPath = (sourceDevice, targetDevice, allDevices, edges) => {
+    const sourceGateway = sourceDevice?.data.gateway;
+    const targetGateway = targetDevice?.data.gateway;
+
+    if (!sourceGateway) {
+      return {
+        connected: false,
+        reason: "Source device has no default gateway configured",
+      };
+    }
+
+    if (!targetGateway) {
+      return {
+        connected: false,
+        reason: "Target device has no default gateway configured",
+      };
+    }
+
+    // Buscar routers que tengan la IP del gateway (no necesariamente tienen que existir como dispositivos)
+    const sourceRouter = allDevices.find(
+      (device) => device.data.ip === sourceGateway && device.type === "router"
+    );
+    const targetRouter = allDevices.find(
+      (device) => device.data.ip === targetGateway && device.type === "router"
+    );
+
+    // Si no existe el router físicamente, asumir que existe en la red
+    if (!sourceRouter && !targetRouter) {
+      // Ambos gateways no existen físicamente
+      if (sourceGateway === targetGateway) {
+        return { connected: true, reason: "Same gateway (assumed to exist)" };
+      } else {
+        return {
+          connected: false,
+          reason: "Different gateways, routing path unknown",
+        };
+      }
+    }
+
+    if (!sourceRouter) {
+      return {
+        connected: false,
+        reason: `Source gateway ${sourceGateway} not found`,
+      };
+    }
+
+    if (!targetRouter) {
+      // El router de destino no existe, pero si el source router puede alcanzar la red
+      const sourceToRouter = checkPhysicalConnectivity(
+        sourceDevice,
+        sourceRouter,
+        allDevices,
+        edges
+      );
+      if (sourceToRouter) {
+        return {
+          connected: true,
+          reason: `Routed through ${sourceGateway} (target gateway assumed)`,
+        };
+      } else {
+        return {
+          connected: false,
+          reason: "No physical path to source gateway",
+        };
+      }
+    }
+
+    // Verificar conectividad física del source al router
+    const sourceToRouter = checkPhysicalConnectivity(
+      sourceDevice,
+      sourceRouter,
+      allDevices,
+      edges
+    );
+    if (!sourceToRouter) {
+      return { connected: false, reason: "No physical path to source gateway" };
+    }
+
+    // Verificar conectividad física del target al router
+    const targetToRouter = checkPhysicalConnectivity(
+      targetDevice,
+      targetRouter,
+      allDevices,
+      edges
+    );
+    if (!targetToRouter) {
+      return { connected: false, reason: "No physical path to target gateway" };
+    }
+
+    // Si es el mismo router o hay conectividad entre routers
+    if (sourceRouter.id === targetRouter.id) {
+      return { connected: true, reason: "Routed through same gateway" };
+    } else {
+      // Verificar si los routers están conectados
+      const routerConnectivity = checkPhysicalConnectivity(
+        sourceRouter,
+        targetRouter,
+        allDevices,
+        edges
+      );
+      if (routerConnectivity) {
+        return { connected: true, reason: "Routed through connected gateways" };
+      } else {
+        return { connected: false, reason: "Gateways are not connected" };
+      }
+    }
   };
 
   const simulatePing = async (targetIp, packets = 4) => {
@@ -103,13 +328,13 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
       return;
     }
 
-    // Buscar dispositivo de destino
+    // Buscar dispositivo de destino (solo dispositivos con IP, switches no cuentan)
     const targetDevice = availableDevices.find(
       (device) => device.data.ip === targetIp
     );
-    const sourceIp = sourceDevice?.data.ip;
+    const allDevices = [sourceDevice, ...availableDevices];
 
-    if (!sourceIp) {
+    if (!sourceDevice?.data.ip) {
       addToConsole("Source device IP not configured.", "error");
       setIsExecuting(false);
       return;
@@ -119,25 +344,49 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
     addToConsole(`Pinging ${targetIp} with 32 bytes of data:`, "info");
     addToConsole(``, "normal");
 
-    let successCount = 0;
-    let totalTime = 0;
+    if (!targetDevice) {
+      // No se encontró dispositivo con esa IP
+      addToConsole(
+        `Network Analysis: Target IP ${targetIp} not found in network`,
+        "info"
+      );
+      addToConsole(``, "normal");
 
-    for (let i = 0; i < packets; i++) {
-      // Simular delay de red
-      await new Promise((resolve) =>
-        setTimeout(resolve, 800 + Math.random() * 400)
+      for (let i = 0; i < packets; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        addToConsole(`Request timed out.`, "error");
+      }
+    } else {
+      // Verificar conectividad de red
+      const connectivity = checkNetworkConnectivity(
+        sourceDevice,
+        targetDevice,
+        allDevices,
+        edges
       );
 
-      if (!targetDevice) {
-        addToConsole(`Request timed out.`, "error");
-      } else if (!targetDevice.data.ip) {
-        addToConsole(`Destination host unreachable.`, "error");
-      } else {
-        // Simular éxito/fallo basado en conectividad
-        const isConnected = Math.random() > 0.1; // 90% de éxito para dispositivos configurados
-        const responseTime = Math.floor(Math.random() * 50) + 1;
+      addToConsole(`Network Analysis: ${connectivity.reason}`, "info");
+      addToConsole(``, "normal");
 
-        if (isConnected) {
+      let successCount = 0;
+      let totalTime = 0;
+
+      for (let i = 0; i < packets; i++) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 800 + Math.random() * 400)
+        );
+
+        if (connectivity.connected) {
+          // Simular latencia basada en el tipo de conexión
+          let baseLatency = 1;
+          if (
+            connectivity.reason.includes("router") ||
+            connectivity.reason.includes("gateway")
+          ) {
+            baseLatency = 10; // Mayor latencia para rutas
+          }
+
+          const responseTime = baseLatency + Math.floor(Math.random() * 30);
           addToConsole(
             `Reply from ${targetIp}: bytes=32 time=${responseTime}ms TTL=128`,
             "success"
@@ -145,30 +394,37 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
           successCount++;
           totalTime += responseTime;
         } else {
-          addToConsole(`Request timed out.`, "error");
+          if (
+            connectivity.reason.includes("gateway") ||
+            connectivity.reason.includes("routing")
+          ) {
+            addToConsole(`Destination host unreachable.`, "error");
+          } else {
+            addToConsole(`Request timed out.`, "error");
+          }
         }
       }
-    }
 
-    // Estadísticas finales
-    addToConsole(``, "normal");
-    addToConsole(`Ping statistics for ${targetIp}:`, "info");
-    addToConsole(
-      `    Packets: Sent = ${packets}, Received = ${successCount}, Lost = ${
-        packets - successCount
-      } (${Math.round(((packets - successCount) / packets) * 100)}% loss),`,
-      "info"
-    );
-
-    if (successCount > 0) {
-      const avgTime = Math.round(totalTime / successCount);
-      addToConsole(`Approximate round trip times in milli-seconds:`, "info");
+      // Estadísticas finales
+      addToConsole(``, "normal");
+      addToConsole(`Ping statistics for ${targetIp}:`, "info");
       addToConsole(
-        `    Minimum = ${Math.max(1, avgTime - 10)}ms, Maximum = ${
-          avgTime + 15
-        }ms, Average = ${avgTime}ms`,
+        `    Packets: Sent = ${packets}, Received = ${successCount}, Lost = ${
+          packets - successCount
+        } (${Math.round(((packets - successCount) / packets) * 100)}% loss),`,
         "info"
       );
+
+      if (successCount > 0) {
+        const avgTime = Math.round(totalTime / successCount);
+        addToConsole(`Approximate round trip times in milli-seconds:`, "info");
+        addToConsole(
+          `    Minimum = ${Math.max(1, avgTime - 5)}ms, Maximum = ${
+            avgTime + 10
+          }ms, Average = ${avgTime}ms`,
+          "info"
+        );
+      }
     }
 
     addToConsole(``, "normal");
@@ -199,6 +455,7 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
       addToConsole(`  help              - Display this help message`, "info");
       addToConsole(`  clear             - Clear console output`, "info");
       addToConsole(`  ipconfig          - Display IP configuration`, "info");
+      addToConsole(`  route             - Display routing information`, "info");
       addToConsole(``, "normal");
       addToConsole(`PC>${sourceDevice?.data.label || "PC"}>`, "prompt");
     } else if (command.toLowerCase() === "clear") {
@@ -210,6 +467,31 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
         },
       ]);
       setAutoScroll(true);
+    } else if (command.toLowerCase() === "route") {
+      addToConsole(``, "normal");
+      addToConsole(`Active Routes:`, "info");
+      addToConsole(
+        `Network Destination        Netmask          Gateway       Interface`,
+        "info"
+      );
+      addToConsole(
+        `          0.0.0.0          0.0.0.0    ${
+          sourceDevice?.data.gateway || "N/A"
+        }    ${sourceDevice?.data.ip || "N/A"}`,
+        "info"
+      );
+      if (sourceDevice?.data.ip && sourceDevice?.data.subnet) {
+        const network = calculateNetworkAddress(
+          sourceDevice.data.ip,
+          sourceDevice.data.subnet
+        );
+        addToConsole(
+          `        ${network}    ${sourceDevice.data.subnet}    ${sourceDevice.data.ip}    ${sourceDevice.data.ip}`,
+          "info"
+        );
+      }
+      addToConsole(``, "normal");
+      addToConsole(`PC>${sourceDevice?.data.label || "PC"}>`, "prompt");
     } else if (command.toLowerCase() === "ipconfig") {
       addToConsole(``, "normal");
       addToConsole(`Windows IP Configuration`, "info");
@@ -248,6 +530,17 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
     }
 
     setCurrentCommand("");
+  };
+
+  // Función auxiliar para calcular dirección de red
+  const calculateNetworkAddress = (ip, subnet) => {
+    const ipParts = ip.split(".").map(Number);
+    const subnetParts = subnet.split(".").map(Number);
+
+    const networkParts = ipParts.map(
+      (part, index) => part & subnetParts[index]
+    );
+    return networkParts.join(".");
   };
 
   const handleKeyPress = (e) => {
@@ -291,14 +584,14 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
               <button
                 className="scroll-btn"
                 onClick={scrollToTop}
-                title="Scroll to top"
+                title="Ir al inicio"
               >
                 <ChevronUp size={16} />
               </button>
               <button
                 className="scroll-btn"
                 onClick={scrollToBottom}
-                title="Scroll to bottom"
+                title="Ir al final"
               >
                 <ChevronDown size={16} />
               </button>
@@ -334,16 +627,9 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
                 <span className="loading-dots">Executing command</span>
               </div>
             )}
+            {/* Elemento invisible para hacer scroll al final */}
+            <div ref={bottomRef} style={{ height: "1px" }} />
           </div>
-
-          {!isAtBottom && (
-            <div className="scroll-indicator">
-              <button className="scroll-to-bottom-btn" onClick={scrollToBottom}>
-                <ChevronDown size={16} />
-                Scroll to bottom to see latest output
-              </button>
-            </div>
-          )}
 
           <div className="console-input-container">
             <span className="console-prompt">
@@ -388,16 +674,34 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
           <div className="available-devices-section">
             <h4>Available Devices:</h4>
             <div className="device-grid">
-              {availableDevices.map((device) => (
-                <div
-                  key={device.id}
-                  className="device-card"
-                  onClick={() => setTargetIp(device.data.ip || "")}
-                >
-                  <span className="device-name">{device.data.label}</span>
-                  <span className="device-ip">{device.data.ip || "No IP"}</span>
-                </div>
-              ))}
+              {availableDevices
+                .filter((device) => device.data.ip) // Solo mostrar dispositivos con IP
+                .map((device) => {
+                  const connectivity = checkNetworkConnectivity(
+                    sourceDevice,
+                    device,
+                    [sourceDevice, ...availableDevices],
+                    edges
+                  );
+                  return (
+                    <div
+                      key={device.id}
+                      className={`device-card ${
+                        connectivity.connected ? "reachable" : "unreachable"
+                      }`}
+                      onClick={() => setTargetIp(device.data.ip || "")}
+                      title={connectivity.reason}
+                    >
+                      <span className="device-name">{device.data.label}</span>
+                      <span className="device-ip">{device.data.ip}</span>
+                      <span className="connectivity-status">
+                        {connectivity.connected
+                          ? "✓ Reachable"
+                          : "✗ Unreachable"}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           </div>
 
@@ -405,10 +709,16 @@ const PingModal = ({ sourceDevice, availableDevices, onPing, onClose }) => {
             <div className="console-stats">
               <span className="line-count">{consoleOutput.length} lines</span>
             </div>
-            <button className="clear-console-btn" onClick={clearConsole}>
-              <Trash2 size={16} />
-              Clear Console
-            </button>
+            <div className="action-buttons">
+              <button className="scroll-bottom-btn" onClick={scrollToBottom}>
+                <ChevronDown size={16} />
+                Scroll to Bottom
+              </button>
+              <button className="clear-console-btn" onClick={clearConsole}>
+                <Trash2 size={16} />
+                Clear Console
+              </button>
+            </div>
           </div>
         </div>
       </div>

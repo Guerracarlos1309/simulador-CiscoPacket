@@ -285,7 +285,7 @@ body {
   border: none;
   color: #ccc;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px;
   border-radius: 4px;
   transition: all 0.2s ease;
   display: flex;
@@ -346,7 +346,7 @@ body {
   overflow-y: auto;
   line-height: 1.4;
   background: #000;
-  scroll-behavior: smooth;
+  max-height: calc(80vh - 200px);
 }
 
 /* Scrollbar personalizada para la consola */
@@ -424,36 +424,6 @@ body {
   100% {
     content: "...";
   }
-}
-
-.scroll-indicator {
-  position: absolute;
-  bottom: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-}
-
-.scroll-to-bottom-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: rgba(59, 130, 246, 0.9);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
-}
-
-.scroll-to-bottom-btn:hover {
-  background: rgba(59, 130, 246, 1);
-  transform: translateY(-2px);
 }
 
 .console-input-container {
@@ -583,6 +553,14 @@ body {
   border-color: #87ceeb;
 }
 
+.device-card.reachable {
+  border-left: 4px solid #10b981;
+}
+
+.device-card.unreachable {
+  border-left: 4px solid #ef4444;
+}
+
 .device-name {
   font-weight: 500;
   font-size: 0.85rem;
@@ -592,6 +570,19 @@ body {
   font-size: 0.75rem;
   color: #87ceeb;
   font-family: "Consolas", "Monaco", "Courier New", monospace;
+}
+
+.connectivity-status {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.device-card.reachable .connectivity-status {
+  color: #10b981;
+}
+
+.device-card.unreachable .connectivity-status {
+  color: #ef4444;
 }
 
 .console-actions {
@@ -609,6 +600,30 @@ body {
   font-family: "Consolas", "Monaco", "Courier New", monospace;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.scroll-bottom-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.scroll-bottom-btn:hover {
+  background: #0052a3;
+}
+
 .clear-console-btn {
   display: flex;
   align-items: center;
@@ -621,6 +636,7 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
+  font-size: 0.85rem;
 }
 
 .clear-console-btn:hover {
@@ -684,6 +700,18 @@ body {
   color: #1e293b;
 }
 
+.switch-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #f0f9ff;
+  border-left: 4px solid #0ea5e9;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #0c4a6e;
+}
+
 .config-form,
 .ping-form {
   padding: 24px;
@@ -714,6 +742,14 @@ body {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.field-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
 }
 
 .form-actions {

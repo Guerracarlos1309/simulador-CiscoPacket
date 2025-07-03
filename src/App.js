@@ -142,34 +142,7 @@ function NetworkSimulator() {
   };
 
   const handlePingSubmit = (targetIp) => {
-    const sourceNode = selectedDevice;
-    const targetNode = nodes.find((node) => node.data.ip === targetIp);
-
-    if (!targetNode) {
-      showToast("Dispositivo de destino no encontrado", "error");
-      return;
-    }
-
-    if (!sourceNode.data.ip || !targetNode.data.ip) {
-      showToast("Ambos dispositivos deben tener IP configurada", "error");
-      return;
-    }
-
-    const isConnected = edges.some(
-      (edge) =>
-        (edge.source === sourceNode.id && edge.target === targetNode.id) ||
-        (edge.target === sourceNode.id && edge.source === targetNode.id)
-    );
-
-    if (isConnected) {
-      showToast(
-        `Ping exitoso: ${sourceNode.data.ip} → ${targetNode.data.ip}`,
-        "success"
-      );
-    } else {
-      showToast("Ping falló: Dispositivos no conectados", "error");
-    }
-
+    // Esta función ya no se usa, el ping se maneja dentro del PingModal
     setShowPingModal(false);
     setSelectedDevice(null);
   };
@@ -221,6 +194,7 @@ function NetworkSimulator() {
         <PingModal
           sourceDevice={selectedDevice}
           availableDevices={nodes.filter((n) => n.id !== selectedDevice?.id)}
+          edges={edges}
           onPing={handlePingSubmit}
           onClose={() => {
             setShowPingModal(false);
