@@ -1,8 +1,23 @@
 "use client";
+
 import { Handle, Position } from "reactflow";
 import { Laptop, Settings, Zap } from "lucide-react";
 
-const LaptopNode = ({ data, onConfigure, onPing }) => {
+const LaptopNode = ({ data, id }) => {
+  const handleConfigure = () => {
+    console.log("Laptop - Configurar clickeado, ID:", id);
+    window.dispatchEvent(
+      new CustomEvent("configureNode", { detail: { nodeId: id } })
+    );
+  };
+
+  const handlePing = () => {
+    console.log("Laptop - Ping clickeado, ID:", id);
+    window.dispatchEvent(
+      new CustomEvent("pingNode", { detail: { nodeId: id } })
+    );
+  };
+
   return (
     <div className="device-node laptop-node">
       <Handle type="target" position={Position.Top} />
@@ -23,11 +38,11 @@ const LaptopNode = ({ data, onConfigure, onPing }) => {
       </div>
 
       <div className="device-actions">
-        <button className="action-btn config-btn" onClick={onConfigure}>
+        <button className="action-btn config-btn" onClick={handleConfigure}>
           <Settings size={14} />
           Configurar
         </button>
-        <button className="action-btn ping-btn" onClick={onPing}>
+        <button className="action-btn ping-btn" onClick={handlePing}>
           <Zap size={14} />
           Ping
         </button>

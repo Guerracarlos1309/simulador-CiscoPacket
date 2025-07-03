@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import ReactFlow, {
   addEdge,
   Background,
@@ -20,18 +20,52 @@ import ConfigModal from "./components/ConfigModal";
 import PingModal from "./components/PingModal";
 import Toast from "./components/Toast";
 
-const initialNodes = [];
-const initialEdges = [];
+const nodeTypes = {
+  router: RouterNode,
+  switch: SwitchNode,
+  laptop: LaptopNode,
+};
 
 function NetworkSimulator() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showPingModal, setShowPingModal] = useState(false);
   const [toast, setToast] = useState(null);
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+
+  // Escuchar eventos personalizados para configurar y ping
+  useEffect(() => {
+    const handleConfigureEvent = (event) => {
+      const { nodeId } = event.detail;
+      console.log("Evento configurar recibido para nodo:", nodeId);
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) {
+        setSelectedDevice(node);
+        setShowConfigModal(true);
+      }
+    };
+
+    const handlePingEvent = (event) => {
+      const { nodeId } = event.detail;
+      console.log("Evento ping recibido para nodo:", nodeId);
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) {
+        setSelectedDevice(node);
+        setShowPingModal(true);
+      }
+    };
+
+    window.addEventListener("configureNode", handleConfigureEvent);
+    window.addEventListener("pingNode", handlePingEvent);
+
+    return () => {
+      window.removeEventListener("configureNode", handleConfigureEvent);
+      window.removeEventListener("pingNode", handlePingEvent);
+    };
+  }, [nodes]);
 
   const onConnect = useCallback(
     (params) => {
@@ -58,17 +92,18 @@ function NetworkSimulator() {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const type = event.dataTransfer.getData("application/reactflow");
 
-      if (typeof type === "undefined" || !type) return;
+      if (typeof type === "undefined" || !type) {
+        return;
+      }
 
       const position = reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
 
-      const newId = `${type}-${Date.now()}`;
-
+      const nodeId = `${type}-${Date.now()}`;
       const newNode = {
-        id: newId,
+        id: nodeId,
         type,
         position,
         data: {
@@ -88,36 +123,25 @@ function NetworkSimulator() {
   );
 
   const handleConfigSave = (config) => {
-    if (!selectedDevice) {
-      showToast("Error: ningún dispositivo seleccionado", "error");
-      return;
-    }
-
-    const currentDevice = selectedDevice;
-
     setNodes((nds) =>
       nds.map((node) =>
-        node.id === currentDevice.id
+        node.id === selectedDevice.id
           ? {
               ...node,
               data: {
                 ...node.data,
                 ...config,
-                // Reasignamos las funciones para no perderlas
-                onConfigure: () => handleConfigure(node.id),
-                onPing: () => handlePingRequest(node.id),
               },
             }
           : node
       )
     );
-
     setShowConfigModal(false);
     setSelectedDevice(null);
     showToast("Configuración guardada exitosamente", "success");
   };
 
-  const handlePing = (targetIp) => {
+  const handlePingSubmit = (targetIp) => {
     const sourceNode = selectedDevice;
     const targetNode = nodes.find((node) => node.data.ip === targetIp);
 
@@ -131,7 +155,6 @@ function NetworkSimulator() {
       return;
     }
 
-    // Simular ping
     const isConnected = edges.some(
       (edge) =>
         (edge.source === sourceNode.id && edge.target === targetNode.id) ||
@@ -148,6 +171,7 @@ function NetworkSimulator() {
     }
 
     setShowPingModal(false);
+    setSelectedDevice(null);
   };
 
   const showToast = (message, type) => {
@@ -159,50 +183,6 @@ function NetworkSimulator() {
     setNodes([]);
     setEdges([]);
     showToast("Red limpiada", "success");
-  };
-
-  const handleConfigure = (nodeId) => {
-    console.log("handleConfigure llamado con id:", nodeId);
-    const node = nodes.find((n) => n.id === nodeId);
-    console.log("Nodo encontrado:", node);
-    if (node) {
-      setSelectedDevice(node);
-      setShowConfigModal(true);
-    } else {
-      console.log("Nodo no encontrado para configurar");
-    }
-  };
-
-  const handlePingRequest = (nodeId) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (node) {
-      setSelectedDevice(node);
-      setShowPingModal(true);
-    }
-  };
-
-  const nodeTypes = {
-    router: (props) => (
-      <RouterNode
-        {...props}
-        onConfigure={() => handleConfigure(props.id)}
-        onPing={() => handlePingRequest(props.id)}
-      />
-    ),
-    switch: (props) => (
-      <SwitchNode
-        {...props}
-        onConfigure={() => handleConfigure(props.id)}
-        onPing={() => handlePingRequest(props.id)}
-      />
-    ),
-    laptop: (props) => (
-      <LaptopNode
-        {...props}
-        onConfigure={() => handleConfigure(props.id)}
-        onPing={() => handlePingRequest(props.id)}
-      />
-    ),
   };
 
   return (
@@ -226,7 +206,7 @@ function NetworkSimulator() {
         </ReactFlow>
       </div>
 
-      {showConfigModal && (
+      {showConfigModal && selectedDevice && (
         <ConfigModal
           device={selectedDevice}
           onSave={handleConfigSave}
@@ -237,11 +217,11 @@ function NetworkSimulator() {
         />
       )}
 
-      {showPingModal && (
+      {showPingModal && selectedDevice && (
         <PingModal
           sourceDevice={selectedDevice}
           availableDevices={nodes.filter((n) => n.id !== selectedDevice?.id)}
-          onPing={handlePing}
+          onPing={handlePingSubmit}
           onClose={() => {
             setShowPingModal(false);
             setSelectedDevice(null);

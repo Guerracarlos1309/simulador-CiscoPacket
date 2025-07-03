@@ -1,8 +1,23 @@
 "use client";
+
 import { Handle, Position } from "reactflow";
 import { Router, Settings, Zap } from "lucide-react";
 
-const RouterNode = ({ data }) => {
+const RouterNode = ({ data, id }) => {
+  const handleConfigure = () => {
+    console.log("Router - Configurar clickeado, ID:", id);
+    window.dispatchEvent(
+      new CustomEvent("configureNode", { detail: { nodeId: id } })
+    );
+  };
+
+  const handlePing = () => {
+    console.log("Router - Ping clickeado, ID:", id);
+    window.dispatchEvent(
+      new CustomEvent("pingNode", { detail: { nodeId: id } })
+    );
+  };
+
   return (
     <div className="device-node router-node">
       <Handle type="target" position={Position.Top} />
@@ -25,14 +40,11 @@ const RouterNode = ({ data }) => {
       </div>
 
       <div className="device-actions">
-        <button
-          className="action-btn config-btn"
-          onClick={() => data.onConfigure?.()}
-        >
+        <button className="action-btn config-btn" onClick={handleConfigure}>
           <Settings size={14} />
           Configurar
         </button>
-        <button className="action-btn ping-btn" onClick={() => data.onPing?.()}>
+        <button className="action-btn ping-btn" onClick={handlePing}>
           <Zap size={14} />
           Ping
         </button>
