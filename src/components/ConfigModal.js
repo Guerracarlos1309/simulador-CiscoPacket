@@ -40,7 +40,7 @@ const ConfigModal = ({ device, onSave, onClose }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3>Configurar {device?.data.label}</h3>
+          <h3 style={{ color: "black" }}>Configurar {device?.data.label}</h3>
           <button className="close-btn" onClick={onClose}>
             <X size={20} />
           </button>
