@@ -19,6 +19,7 @@ import Sidebar from "./components/Sidebar";
 import ConfigModal from "./components/ConfigModal";
 import PingModal from "./components/PingModal";
 import Toast from "./components/Toast";
+import HomePage from "./components/HomePage";
 
 const nodeTypes = {
   router: RouterNode,
@@ -33,6 +34,7 @@ function NetworkSimulator() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showPingModal, setShowPingModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showHomePage, setShowHomePage] = useState(true);
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
@@ -158,9 +160,21 @@ function NetworkSimulator() {
     showToast("Red limpiada", "success");
   };
 
+  const startSimulator = () => {
+    setShowHomePage(false);
+  };
+
+  const goToHomePage = () => {
+    setShowHomePage(true);
+  };
+
+  if (showHomePage) {
+    return <HomePage onStartSimulator={startSimulator} />;
+  }
+
   return (
     <div className="network-simulator">
-      <Sidebar onClear={clearNetwork} />
+      <Sidebar onClear={clearNetwork} onGoHome={goToHomePage} />
       <div className="main-content" ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
