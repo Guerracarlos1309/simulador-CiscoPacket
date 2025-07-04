@@ -19,7 +19,7 @@ import Sidebar from "./components/Sidebar";
 import ConfigModal from "./components/ConfigModal";
 import PingModal from "./components/PingModal";
 import Toast from "./components/Toast";
-import HomePage from "./components/HomePage";
+import HomePage from "./components/homePage";
 
 const nodeTypes = {
   router: RouterNode,
