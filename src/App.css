@@ -12,7 +12,7 @@ body {
 .network-simulator {
   display: flex;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #40e0d0 100%);
 }
 
 /* Sidebar Styles */
