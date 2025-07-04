@@ -31,6 +31,7 @@ const PingModal = ({
       `Cisco Packet Tracer PC Command Line 1.0`,
       `Copyright 2007-2024 Cisco Systems, Inc.`,
       ``,
+      `Bienvenido. Escribe 'help' para ver los comandos disponibles.`,
       `PC>${sourceDevice?.data.label || "PC"}>`,
       ``,
     ];
@@ -447,15 +448,18 @@ const PingModal = ({
       const target = pingMatch[1].trim();
       await simulatePing(target);
     } else if (command.toLowerCase() === "help") {
-      addToConsole(`Available commands:`, "info");
+      addToConsole(`Comandos disponibles:`, "info");
+      addToConsole(`  ping <ip_address>  - Realizar PING`, "info");
       addToConsole(
-        `  ping <ip_address>  - Send ICMP echo requests to network host`,
+        `  help              - Mostrar los mensajes de ayuda`,
         "info"
       );
-      addToConsole(`  help              - Display this help message`, "info");
-      addToConsole(`  clear             - Clear console output`, "info");
-      addToConsole(`  ipconfig          - Display IP configuration`, "info");
-      addToConsole(`  route             - Display routing information`, "info");
+      addToConsole(`  clear             - Borrar la consola`, "info");
+      addToConsole(`  ipconfig          - Mostrar configuración IP`, "info");
+      addToConsole(
+        `  route             - Mostrar información de enrutamiento`,
+        "info"
+      );
       addToConsole(``, "normal");
       addToConsole(`PC>${sourceDevice?.data.label || "PC"}>`, "prompt");
     } else if (command.toLowerCase() === "clear") {
@@ -577,7 +581,7 @@ const PingModal = ({
         <div className="modal-header">
           <div className="header-left">
             <Terminal size={20} />
-            <h3>Command Prompt - {sourceDevice?.data.label}</h3>
+            <h3>Consola - {sourceDevice?.data.label}</h3>
           </div>
           <div className="header-controls">
             <div className="scroll-controls">
@@ -642,7 +646,7 @@ const PingModal = ({
               onChange={(e) => setCurrentCommand(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isExecuting}
-              placeholder="Type command here... (try 'help' or 'ping 192.168.1.1')"
+              placeholder="Ingrese el comando (192.168.1.0)"
               autoFocus
             />
           </div>
@@ -650,13 +654,13 @@ const PingModal = ({
 
         <div className="console-controls">
           <div className="quick-ping-section">
-            <h4>Quick Ping:</h4>
+            <h4>Ping:</h4>
             <div className="quick-ping-controls">
               <input
                 type="text"
                 value={targetIp}
                 onChange={(e) => setTargetIp(e.target.value)}
-                placeholder="Enter IP address"
+                placeholder="Ingrese la direccion IP"
                 className="quick-ping-input"
                 disabled={isExecuting}
               />
@@ -672,7 +676,7 @@ const PingModal = ({
           </div>
 
           <div className="available-devices-section">
-            <h4>Available Devices:</h4>
+            <h4>Dispositivos disponibles:</h4>
             <div className="device-grid">
               {availableDevices
                 .filter((device) => device.data.ip) // Solo mostrar dispositivos con IP
@@ -696,8 +700,8 @@ const PingModal = ({
                       <span className="device-ip">{device.data.ip}</span>
                       <span className="connectivity-status">
                         {connectivity.connected
-                          ? "✓ Reachable"
-                          : "✗ Unreachable"}
+                          ? "✓ Accesible"
+                          : "✗ Inaccesible"}
                       </span>
                     </div>
                   );
@@ -707,7 +711,7 @@ const PingModal = ({
 
           <div className="console-actions">
             <div className="console-stats">
-              <span className="line-count">{consoleOutput.length} lines</span>
+              <span className="line-count">{consoleOutput.length} lineas</span>
             </div>
             <div className="action-buttons">
               <button className="scroll-bottom-btn" onClick={scrollToBottom}>
