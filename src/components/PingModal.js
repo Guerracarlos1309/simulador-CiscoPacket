@@ -712,11 +712,11 @@ const PingModal = ({
             <div className="action-buttons">
               <button className="scroll-bottom-btn" onClick={scrollToBottom}>
                 <ChevronDown size={16} />
-                Scroll to Bottom
+                Desplazar hasta el final
               </button>
               <button className="clear-console-btn" onClick={clearConsole}>
                 <Trash2 size={16} />
-                Clear Console
+                Limpiar Consola
               </button>
             </div>
           </div>
