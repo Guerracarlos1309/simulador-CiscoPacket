@@ -11,7 +11,7 @@ const Sidebar = ({ onClear }) => {
     <div className="sidebar">
       <div className="sidebar-header">
         <h2>Simulador de Red</h2>
-        <p>Arrastra los dispositivos al canvas</p>
+        <p>Arrastra los dispositivos a la mesa de trabajo</p>
       </div>
 
       <div className="device-list">
@@ -53,7 +53,7 @@ const Sidebar = ({ onClear }) => {
       <div className="instructions">
         <h3>Instrucciones:</h3>
         <ul>
-          <li>Arrastra dispositivos al canvas</li>
+          <li>Arrastra dispositivos a la mesa de trabajo</li>
           <li>Conecta dispositivos arrastrando desde los puertos</li>
           <li>Haz clic en "Configurar" para establecer IP</li>
           <li>Usa "Ping" para probar conectividad</li>
