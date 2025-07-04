@@ -1,7 +1,7 @@
 "use client";
-import { Router, Wifi, Laptop, Trash2 } from "lucide-react";
+import { Router, Wifi, Laptop, Trash2, Home } from "lucide-react";
 
-const Sidebar = ({ onClear }) => {
+const Sidebar = ({ onClear, onGoHome }) => {
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
@@ -44,6 +44,11 @@ const Sidebar = ({ onClear }) => {
       </div>
 
       <div className="sidebar-actions">
+        <button className="home-button" onClick={onGoHome}>
+          <Home size={16} />
+          Página Principal
+        </button>
+
         <button className="clear-button" onClick={onClear}>
           <Trash2 size={16} />
           Limpiar Red
