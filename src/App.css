@@ -12,13 +12,13 @@ body {
 .network-simulator {
   display: flex;
   height: 100vh;
-  background: linear-gradient(135deg, #ffffff 0%, #40e0d0 100%);
+  background: linear-gradient(135deg, #0d0055 0%, #006b60 100%);
 }
 
 /* Homepage Styles */
 .homepage {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffffff 0%, #40e0d0 100%);
+  background: linear-gradient(135deg, #0d0055 0%, #006b60 100%);
 }
 
 .hero-section {
@@ -35,7 +35,7 @@ body {
 }
 
 .hero-text {
-  color: black;
+  color: rgb(255, 255, 255);
 }
 
 .hero-title {
@@ -49,7 +49,7 @@ body {
   display: block;
   font-size: 1.5rem;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.8);
   margin-top: 8px;
 }
 
@@ -57,7 +57,7 @@ body {
   font-size: 1.2rem;
   line-height: 1.6;
   margin-bottom: 32px;
-  color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .hero-actions {
@@ -66,12 +66,11 @@ body {
 }
 
 .start-btn {
-  display: flex;
   align-items: center;
   gap: 8px;
   padding: 16px 32px;
   background: white;
-  color: #667eea;
+  color: #0d0055;
   border: none;
   border-radius: 12px;
   font-size: 1.1rem;
@@ -79,6 +78,9 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+.flecha{
+  display: inline-flex;
 }
 
 .start-btn:hover {
@@ -168,7 +170,7 @@ body {
   display: flex;
   justify-content: center;
   border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: #cad0ff;
 }
 
 .tab-btn {
@@ -177,21 +179,22 @@ body {
   border: none;
   font-size: 1rem;
   font-weight: 500;
-  color: #64748b;
+  color: #000000;
   cursor: pointer;
   transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
 }
 
 .tab-btn:hover {
-  color: #1e293b;
-  background: #f1f5f9;
+  color: #0d0055;
+  font-size: 1.1rem;
+  background: rgb(228, 228, 228);
 }
 
 .tab-btn.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-  background: white;
+  color: #0d0055;
+  border-bottom-color: #0d0055;
+  background: rgb(228, 228, 228);
 }
 
 .tab-content {
@@ -201,11 +204,11 @@ body {
 }
 
 .section-title {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
   text-align: center;
   margin-bottom: 48px;
-  color: #1e293b;
+  color: #0d0055;
 }
 
 .features-grid {
@@ -215,7 +218,7 @@ body {
 }
 
 .feature-card {
-  background: white;
+  background: #0d0055;
   padding: 32px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -236,17 +239,18 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+  color: #ffffff;
 }
 
 .feature-title {
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #1e293b;
+  color: #ffffff;
 }
 
 .feature-description {
-  color: #64748b;
+  color: #ffffff;
   line-height: 1.6;
 }
 
@@ -261,16 +265,16 @@ body {
   display: flex;
   gap: 24px;
   padding: 32px;
-  background: white;
+  background: rgb(236, 236, 236);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f1f5f9;
+  border: 1px solid #c7c7c7;
 }
 
 .step-number {
   font-size: 2rem;
   font-weight: 700;
-  color: #667eea;
+  color: #0d0055;
   min-width: 60px;
 }
 
@@ -286,7 +290,7 @@ body {
 }
 
 .step-icon {
-  color: #667eea;
+  color: #0d0055;
 }
 
 .step-title {
@@ -296,7 +300,7 @@ body {
 }
 
 .step-description {
-  color: #64748b;
+  color: #0d0055;
   line-height: 1.6;
 }
 
@@ -307,7 +311,7 @@ body {
 .commands-intro {
   text-align: center;
   font-size: 1.1rem;
-  color: #64748b;
+  color: #1a0f5c;
   margin-bottom: 48px;
   max-width: 600px;
   margin-left: auto;
@@ -326,12 +330,12 @@ body {
   align-items: center;
   gap: 24px;
   padding: 24px;
-  background: white;
+  background: rgb(245, 245, 245);
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
+  border: 1px solid  #dbdbdb;
 }
-
+  
 .command-syntax {
   display: flex;
   align-items: center;
@@ -340,16 +344,16 @@ body {
 }
 
 .command-syntax code {
-  background: #f1f5f9;
+  background: transparent;
   padding: 4px 8px;
   border-radius: 4px;
   font-family: "Consolas", "Monaco", "Courier New", monospace;
-  color: #667eea;
+  color: #0d0055;
   font-weight: 500;
 }
 
 .command-description {
-  color: #64748b;
+  color: #000f24;
   flex: 1;
 }
 
@@ -359,15 +363,18 @@ body {
   padding: 20px;
   background: #f0f9ff;
   border-radius: 12px;
-  border-left: 4px solid #0ea5e9;
+  border: 1px solid #0d0055;
+  border-right: 1px solid #0d0055;
+  border-top: 1px solid #0d0055;
+  border-left: 4px solid #0d0055;
 }
 
 .note-icon {
-  color: #0ea5e9;
+  color: #0070a3;
 }
 
 .note-content {
-  color: #0c4a6e;
+  color: #0d0055;
 }
 
 .note-content code {
@@ -384,22 +391,22 @@ body {
 }
 
 .example-card {
-  background: white;
+  background: rgb(236, 236, 236);
   padding: 32px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f1f5f9;
+  border: 1px solid #c7c7c7;
 }
 
 .example-title {
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #1e293b;
+  color: #0d0055;
 }
 
 .example-description {
-  color: #64748b;
+  color: #1e293b;
   margin-bottom: 20px;
   line-height: 1.6;
 }
@@ -408,18 +415,19 @@ body {
 .example-config {
   margin-bottom: 12px;
   padding: 12px;
-  background: #f8fafc;
+  background: transparent;
   border-radius: 8px;
   font-size: 0.9rem;
+  color: #1e293b;
 }
 
 .example-topology strong,
 .example-config strong {
-  color: #1e293b;
+  color: #0d0055;
 }
 
 .footer-cta {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #0d0055 50%, #006b60 150%);
   padding: 80px 20px;
   text-align: center;
 }

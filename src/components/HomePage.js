@@ -142,9 +142,8 @@ const HomePage = ({ onStartSimulator }) => {
               </span>
             </h1>
             <p className="hero-description">
-              Una herramienta educativa inspirada en Cisco Packet Tracer para
-              simular, configurar y probar redes de computadoras. Perfecta para
-              estudiantes y profesionales de redes.
+              Una herramienta didáctica, diseñada para simular, configurar 
+              y evaluar redes de computadoras de manera interactiva.
             </p>
             <div className="hero-actions">
               <button className="start-btn" onClick={onStartSimulator}>
@@ -316,9 +315,9 @@ const HomePage = ({ onStartSimulator }) => {
             Crea tu primera red y experimenta con diferentes configuraciones
           </p>
           <button className="start-btn large" onClick={onStartSimulator}>
-            <Play size={24} />
-            Abrir Simulador
-            <ArrowRight size={20} />
+            <Play className="flecha" size={24} />
+              Abrir Simulador..
+            <ArrowRight className="flecha" />
           </button>
         </div>
       </div>
